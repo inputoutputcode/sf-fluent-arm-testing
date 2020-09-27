@@ -1,6 +1,6 @@
   
 trigger:
-  - chrpap-sf1
+  - chrpap-sf1-abuild
 
 variables:
   DotNetCoreVersion: '2.1.503'
@@ -15,7 +15,7 @@ jobs:
           displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
           inputs:
             version: '$(DotNetCoreVersion)'
-        - script: './test_on_linux.sh'
+        - script: './testsf_on_linux.sh'
           displayName: 'Build and test on Non-windows machine'
         - task: PublishTestResults@2
           condition: succeededOrFailed()
