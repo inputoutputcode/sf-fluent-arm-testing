@@ -29,8 +29,9 @@ jobs:
       - task: VSTest@2
         inputs:
           testSelector: 'testAssemblies'
+          testAssemblyVer2: '**\*test*.dll'
           searchFolder: '$(System.DefaultWorkingDirectory)'
-          testFiltercriteria: '/TestCaseFilter:"FullyQualifiedName=Fluent.Tests.ServiceFabric.*"'
+          testFiltercriteria: '/TestCaseFilter:"FullyQualifiedName=Fluent.Tests.ServiceFabric"'
           runInParallel: true
       - task: PublishTestResults@2
         condition: succeededOrFailed()
