@@ -3,6 +3,7 @@ trigger:
 
 variables:
   DotNetCoreVersion: '2.1.503'
+  azureSubscription: 'Visual Studio Ultimate mit MSDN'
 
 jobs:
   - job: Windows_Build
@@ -27,6 +28,7 @@ jobs:
           searchFolder: '$(System.DefaultWorkingDirectory)'
           testFiltercriteria: '/TestCaseFilter:"FullyQualifiedName=Fluent.Tests.ServiceFabric.*"'
           runInParallel: true
+          
       - task: PublishTestResults@2
         condition: succeededOrFailed()
         inputs:
