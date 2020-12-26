@@ -9,7 +9,7 @@ netstd16="netstandard1.6"
 netcore20='netcoreapp2.0'
 ubuntu1404="ubuntu.14.04-x64"
 nugetOrgSource="https://api.nuget.org/v3/index.json"
-AZURE_TEST_MODE=Record
+export AZURE_TEST_MODE=Record
 
 dotnet --info
 
