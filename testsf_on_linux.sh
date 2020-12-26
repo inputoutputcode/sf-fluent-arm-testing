@@ -79,5 +79,5 @@ dotnet build Tests/Fluent.Tests/Fluent.Tests.csproj -f $netcore20
 
 echo Running Fluent Tests
 cd $rootdir/Tests/Fluent.Tests
-dotnet test Fluent.Tests.csproj -f $netcore20 --no-build --filter ClassName=Fluent.Tests.ServiceFabric -s ServiceFabric.runsettings
+dotnet test Fluent.Tests.csproj -f $netcore20 --no-build --filter ClassName=ServiceFabric -s ServiceFabric.runsettings
 
