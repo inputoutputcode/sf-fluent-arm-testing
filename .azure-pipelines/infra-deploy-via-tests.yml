@@ -14,8 +14,22 @@ jobs:
           displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
           inputs:
             version: '$(DotNetCoreVersion)'
-        - script: './testsf_on_linux.sh'
-          displayName: 'Build and test on Non-windows machine'
+
+        - task: AzureKeyVault@1
+          inputs:
+            azureSubscription: 'Visual Studio Ultimate mit MSDN'
+            KeyVaultName: 'chrpap-secrets'
+            SecretsFilter: '2dc1e421-5121-47e3-b411-36c8a35a35c8'
+            RunAsPreJob: false
+
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: 'Visual Studio Ultimate mit MSDN'
+            scriptType: 'bash'
+            scriptLocation: 'scriptPath'
+            scriptPath: './testsf_on_linux.sh'
+            addSpnToEnvironment: true
+
         - task: PublishTestResults@2
           condition: succeededOrFailed()
           inputs:
@@ -23,3 +37,4 @@ jobs:
             testRunTitle: 'Ubuntu Test Results'
             testResultsFormat: 'VSTest'
             mergeTestResults: true
+            

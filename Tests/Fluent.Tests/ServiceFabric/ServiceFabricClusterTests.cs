@@ -33,6 +33,7 @@ using System.Threading;
 using Microsoft.ServiceFabric.Client;
 using Microsoft.ServiceFabric.Common.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Assert = Xunit.Assert;
 
 namespace Fluent.Tests
 {
