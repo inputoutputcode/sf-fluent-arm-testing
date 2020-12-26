@@ -10,6 +10,7 @@ netcore20='netcoreapp2.0'
 ubuntu1404="ubuntu.14.04-x64"
 nugetOrgSource="https://api.nuget.org/v3/index.json"
 export AZURE_TEST_MODE=Record
+export AZURE_INFRA_DEPLOYMENT=1
 
 dotnet --info
 
@@ -80,5 +81,5 @@ dotnet build Tests/Fluent.Tests/Fluent.Tests.csproj -f $netcore20
 
 echo Running Fluent Tests
 cd $rootdir/Tests/Fluent.Tests
-dotnet test Fluent.Tests.csproj -f $netcore20 --no-build --filter DisplayName~ServiceFabric -s ServiceFabric.runsettings
+dotnet test Fluent.Tests.csproj -f $netcore20 --no-build --filter DisplayName~ServiceFabric
 

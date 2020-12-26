@@ -327,7 +327,7 @@ namespace Fluent.Tests.Common
         {
             AzureCredentials credentials;
 
-            if (TestContext.Properties.Contains("AZURE_INFRA_DEPLOYMENT"))
+            if (Environment.GetEnvironmentVariable("AZURE_INFRA_DEPLOYMENT") != null)
             {
                 credentials = AzureCliCredentials.Create().WithDefaultSubscription(subscriptionId);
             }
