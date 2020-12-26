@@ -38,12 +38,14 @@ using Xunit.Abstractions;
 using Microsoft.Azure.Management.Msi.Fluent;
 using Microsoft.Azure.Management.PrivateDns.Fluent;
 using Microsoft.Azure.Management.ServiceFabric.Fluent;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Fluent.Tests.Common
 {
     public static class TestHelper
     {
         public static ITestOutputHelper TestLogger { get; set; }
+        public static TestContext TestContext { get; set; }
 
         private static string authFilePath = Environment.GetEnvironmentVariable("AZURE_AUTH_LOCATION");
         private static string clientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
@@ -324,7 +326,12 @@ namespace Fluent.Tests.Common
         private static T CreateMockedManager<T>(Func<AzureCredentials, T> builder)
         {
             AzureCredentials credentials;
-            if (authFilePath != null || HttpMockServer.Mode == HttpRecorderMode.Playback)
+
+            if (TestContext.Properties.Contains("AZURE_INFRA_DEPLOYMENT"))
+            {
+                credentials = AzureCliCredentials.Create().WithDefaultSubscription(subscriptionId);
+            }
+            else if (authFilePath != null || HttpMockServer.Mode == HttpRecorderMode.Playback)
             {
                 credentials = SdkContext.AzureCredentialsFactory.FromFile(authFilePath);
             }

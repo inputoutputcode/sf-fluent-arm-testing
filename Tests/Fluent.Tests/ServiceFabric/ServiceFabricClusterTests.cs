@@ -32,12 +32,13 @@ using Microsoft.Azure.Management.KeyVault.Fluent;
 using System.Threading;
 using Microsoft.ServiceFabric.Client;
 using Microsoft.ServiceFabric.Common.Security;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Fluent.Tests
 {
     public class ServiceFabric
     {
-
+        public TestContext TestContext { get; set; }
 
         [Fact]
         public void CanCreateBasicCluster()
