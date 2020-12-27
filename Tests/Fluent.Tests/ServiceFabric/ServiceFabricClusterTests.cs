@@ -138,6 +138,14 @@ namespace Fluent.Tests
             }
         }
 
+        internal class UserInfo
+        {
+            [JsonProperty(PropertyName = "type")]
+            public string Type { get; set; }
+            [JsonProperty(PropertyName = "name")]
+            public string Name { get; set; }
+        }
+
         internal class AzureCliSubscription
         {
             [JsonProperty(PropertyName = "environmentName")]
