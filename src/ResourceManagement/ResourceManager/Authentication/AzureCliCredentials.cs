@@ -41,15 +41,17 @@ namespace Microsoft.Azure.Management.ResourceManager.Fluent.Authentication
             }
 #endif
 
+            string azureProfilePath = Path.Combine(homeDir, azureCliFolder, azureProfileFile);
+            string accessTokensPath = Path.Combine(homeDir, azureCliFolder, accessTokensFile);
 
-            string azurePipelineTmpDir = homeDir;
             if (Environment.GetEnvironmentVariable("AZURE_INFRA_DEPLOYMENT") != null)
-                azurePipelineTmpDir = Path.GetTempPath();
-            
-            azureCliCredentials.Create(
-                Path.Combine(homeDir, azureCliFolder, azureProfileFile),
-                Path.Combine(azurePipelineTmpDir, azureCliFolder, accessTokensFile)
-                );
+            {
+                string linuxHomeDir = Environment.GetEnvironmentVariable("AZURE_CONFIG_DIR");
+                azureProfilePath = Path.Combine(linuxHomeDir, azureProfileFile);
+                accessTokensPath = Path.Combine(linuxHomeDir, accessTokensFile);
+            }
+
+            azureCliCredentials.Create(azureProfilePath, accessTokensPath);
 
             if (azureCliCredentials.Subscription() == null)
             {
