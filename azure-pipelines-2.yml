@@ -12,5 +12,9 @@ jobs:
             azureSubscription: 'Visual Studio Ultimate mit MSDN'
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
-            inlineScript: 'ls -R -la'
+            inlineScript: |
+              cd ~
+              ls -d */
+              cd /
+              ls -d */
             addSpnToEnvironment: true
