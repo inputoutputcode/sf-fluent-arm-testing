@@ -240,7 +240,6 @@ namespace Fluent.Tests
         {
             string userProfile = "%USERPROFILE%";
             string home = "HOME";
-            string linuxHome = "AZURE_CONFIG_DIR";
             string azureCliFolder = ".azure";
             string azureProfileFile = "azureProfile.json";
             string accessTokensFile = "accessTokens.json";
@@ -255,31 +254,24 @@ namespace Fluent.Tests
 #else
             if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
             {
-                homeDir = Environment.GetEnvironmentVariable(linuxHome);
+                homeDir = Environment.GetEnvironmentVariable(home);
             }
 #endif
 
-            output.WriteLine($"homeDir: {homeDir}");
-            output.WriteLine($"accessTokenPath> {Path.Combine(Path.GetTempPath(), azureCliFolder, accessTokensFile)}");
-
             string azureProfilePath = Path.Combine(homeDir, azureCliFolder, azureProfileFile);
-            string accessTokensPath = Path.Combine(Path.GetTempPath(), azureCliFolder, accessTokensFile);
+            string accessTokensPath = Path.Combine(homeDir, azureCliFolder, accessTokensFile);
+
+            if (Environment.GetEnvironmentVariable("AZURE_INFRA_DEPLOYMENT") != null)
+            {
+                string linuxHomeDir = Environment.GetEnvironmentVariable("AZURE_CONFIG_DIR");
+                azureProfilePath = Path.Combine(linuxHomeDir, azureProfileFile);
+                accessTokensPath = Path.Combine(linuxHomeDir, accessTokensFile);
+            }
 
             string azureProfileText = File.ReadAllText(azureProfilePath);
-            string accessTokensText = string.Empty;
+            string accessTokensText = accessTokensText = File.ReadAllText(accessTokensPath);
 
-            try
-            {
-                accessTokensText = File.ReadAllText(accessTokensPath);
-            }
-            catch (Exception ex)
-            {
-                output.WriteLine($"ex: {ex.Message}");
-
-                if (ex.InnerException != null)
-                    output.WriteLine($"ex.InnerException: {ex.InnerException.Message}");
-            }
-            
+                
             AzureCliSubscriptionWrapper wrapper = JsonConvert.DeserializeObject<AzureCliSubscriptionWrapper>(azureProfileText);
             IEnumerable<AzureCliToken> tokens = JsonConvert.DeserializeObject<IEnumerable<AzureCliToken>>(accessTokensText);
 
