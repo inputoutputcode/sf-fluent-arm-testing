@@ -15,5 +15,9 @@ steps:
     azureSubscription: 'Visual Studio Ultimate mit MSDN'
     scriptType: 'pscore'
     scriptLocation: 'inlineScript'
-    inlineScript: 'Get-ChildItem -Recurse'
+    inlineScript: |
+      cd $env:USERPROFILE
+      Get-ChildItem -Recurse
+      cd $env:AZURE_CONFIG_DIR
+      Get-ChildItem -Recurse
     addSpnToEnvironment: true
