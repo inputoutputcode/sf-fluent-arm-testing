@@ -2,7 +2,7 @@ trigger:
   - chrpap-sf1-abuild
 
 jobs:
-  - job: build and tests
+  - job: build_and_tests
     pool:
       vmImage: 'windows-2019'
   
