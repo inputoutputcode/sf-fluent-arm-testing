@@ -88,7 +88,7 @@ namespace Fluent.Tests
         [Fact]
         public void CanCreateBasicCluster()
         {
-            using (SingleTimer.Start(output))
+            //using (SingleTimer.Start(output))
             using (var mockContext = FluentMockContext.Start(this.GetType().FullName))
             {
                 #region Parameters / Setup
