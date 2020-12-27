@@ -259,12 +259,26 @@ namespace Fluent.Tests
 #endif
 
             output.WriteLine($"homeDir: {homeDir}");
+            output.WriteLine($"accessTokenPath> {Path.Combine(Path.GetTempPath(), azureCliFolder, accessTokensFile)}");
 
             string azureProfilePath = Path.Combine(homeDir, azureCliFolder, azureProfileFile);
             string accessTokensPath = Path.Combine(Path.GetTempPath(), azureCliFolder, accessTokensFile);
 
             string azureProfileText = File.ReadAllText(azureProfilePath);
-            string accessTokensText = File.ReadAllText(accessTokensPath);
+            string accessTokensText = string.Empty;
+
+            try
+            {
+                accessTokensText = File.ReadAllText(accessTokensPath);
+            }
+            catch (Exception ex)
+            {
+                output.WriteLine(ex.Message);
+
+                if (ex.InnerException != null)
+                    output.WriteLine(ex.InnerException.Message);
+            }
+            
             AzureCliSubscriptionWrapper wrapper = JsonConvert.DeserializeObject<AzureCliSubscriptionWrapper>(azureProfileText);
             IEnumerable<AzureCliToken> tokens = JsonConvert.DeserializeObject<IEnumerable<AzureCliToken>>(accessTokensText);
 
@@ -301,15 +315,6 @@ namespace Fluent.Tests
                         }
                     }
                 }
-            }
-
-            try
-            {
-               
-            }
-            catch(Exception ex)
-            {
-                output.WriteLine(string.Format("Cannot read files {0} and {1}.Are you logged in Azure CLI ?", azureProfilePath, accessTokensPath));
             }
 
             if (defaultSubscription == null)
