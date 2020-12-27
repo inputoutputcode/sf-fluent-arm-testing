@@ -13,6 +13,8 @@ jobs:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
+              echo 'ECHO:  ls'
+              ls
               echo 'ECHO: cd $HOME + ls'
               cd $HOME
               ls
