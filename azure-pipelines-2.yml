@@ -4,7 +4,7 @@ trigger:
 jobs:
   - job: Ubuntu_Build
     pool:
-      vmImage: 'ubuntu-16.04'
+      vmImage: 'ubuntu-latest'
   
     steps:
         - task: AzureCLI@2
@@ -13,15 +13,16 @@ jobs:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
-              echo 'change dir to /tmp + ls'
+              ls
+              echo 'ECHO: change dir to /tmp + ls'
               cd /
-              echo $PWD
+              echo 'ECHO: ' + $PWD
               ls
               cd tmp
-              echo $PWD
+              echo 'ECHO: ' + $PWD
               ls
               cd .azure
-              echo $PWD
+              echo 'ECHO: ' + $PWD
               ls
               cat accessTokens.json
             addSpnToEnvironment: true
