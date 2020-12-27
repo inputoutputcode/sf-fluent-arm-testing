@@ -21,12 +21,10 @@ jobs:
 
               cd .azure
               ls -la
-              cat az.json
-              cat az.sess
-              cat accessTokens.json
+              cat azureProfile.json
 
-              echo 'ECHO: cd /tmp  + ls'
-              cd /
+              echo 'ECHO: cd /  + ls'
+              cd /tmp
               echo 'ECHO: $PWD ' $PWD
               ls -la
 
