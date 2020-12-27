@@ -59,7 +59,7 @@ namespace Microsoft.Azure.Management.ResourceManager.Fluent.Authentication
             }
 
             AzureCliSubscription subscription = azureCliCredentials.Subscription();
-            return SdkContext.AzureCredentialsFactory.FromServicePrincipal(subscription.ClientId, subscription.Token().AccessToken, subscription.TenantId, subscription.Environment());
+            return SdkContext.AzureCredentialsFactory.FromServicePrincipal(subscription.ClientId, subscription.Token().AccessToken, subscription.TenantId, subscription.Environment()).WithDefaultSubscription(subscription.Id);
         }
 
         private void Create(string azureProfilePath, string accessTokensPath)
