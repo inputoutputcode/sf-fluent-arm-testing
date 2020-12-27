@@ -239,7 +239,7 @@ namespace Fluent.Tests
         private void TestAzureCliLogin()
         {
             string userProfile = "%USERPROFILE%";
-            string home = "HOME";
+            string home = "$HOME";
             string azureCliFolder = ".azure";
             string azureProfileFile = "azureProfile.json";
             string accessTokensFile = "accessTokens.json";
@@ -258,6 +258,9 @@ namespace Fluent.Tests
             }
 #endif
 
+            string tokenFileEnvVar = Environment.GetEnvironmentVariable("AZURE_ACCESS_TOKEN_FILE");
+
+            output.WriteLine($"AZURE_ACCESS_TOKEN_FILE: {tokenFileEnvVar}");
             output.WriteLine($"homeDir: {homeDir}");
 
             string azureProfilePath = Path.Combine(homeDir, azureCliFolder, azureProfileFile);
