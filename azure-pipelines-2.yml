@@ -13,28 +13,12 @@ jobs:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
-              echo 'ECHO: change dir to ~ + ls'
-              cd ~ 
+              echo 'ECHO: cd $HOME + ls'
+              cd $HOME
               ls
-              echo 'ECHO: change dir to /.azure + ls'
+              echo 'ECHO: cd .azure + ls'
               cd /.azure
               ls
               cat azureProfile.json
-              cat accessTokens.json
-              echo 'ECHO: change dir to /home/vsts + ls'
-              cd /home/vsts
-              ls
-              echo 'ECHO: change dir to /.azure + ls'
-              cd /.azure
-              ls
-              cat azureProfile.json
-              cat accessTokens.json
-              echo 'ECHO: change dir to /tmp + ls'
-              cd /tmp
-              echo 'ECHO: ' + $PWD
-              ls
-              cd .azure
-              echo 'ECHO: ' + $PWD
-              ls
               cat accessTokens.json
             addSpnToEnvironment: true
