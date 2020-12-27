@@ -240,6 +240,7 @@ namespace Fluent.Tests
         {
             string userProfile = "%USERPROFILE%";
             string home = "HOME";
+            string linuxHome = "AZURE_CONFIG_DIR";
             string azureCliFolder = ".azure";
             string azureProfileFile = "azureProfile.json";
             string accessTokensFile = "accessTokens.json";
@@ -254,7 +255,7 @@ namespace Fluent.Tests
 #else
             if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
             {
-                homeDir = Environment.GetEnvironmentVariable(home);
+                homeDir = Environment.GetEnvironmentVariable(linuxHome);
             }
 #endif
 
@@ -273,10 +274,10 @@ namespace Fluent.Tests
             }
             catch (Exception ex)
             {
-                output.WriteLine(ex.Message);
+                output.WriteLine($"ex: {ex.Message}");
 
                 if (ex.InnerException != null)
-                    output.WriteLine(ex.InnerException.Message);
+                    output.WriteLine($"ex.InnerException: {ex.InnerException.Message}");
             }
             
             AzureCliSubscriptionWrapper wrapper = JsonConvert.DeserializeObject<AzureCliSubscriptionWrapper>(azureProfileText);
