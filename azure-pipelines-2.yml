@@ -21,18 +21,15 @@ jobs:
 
               cd .azure
               ls -la
-              cat azureProfile.json
+              cat az.json
+              cat az.sess
               cat accessTokens.json
 
               echo 'ECHO: cd /tmp  + ls'
               cd /
-              echo 'ECHO: ' + $PWD
-              cd tmp
-              echo 'ECHO: ' + $PWD
+              echo 'ECHO: $PWD ' $PWD
               ls -la
 
-              cd .azure
-              ls -la
               cat azureProfile.json
               cat accessTokens.json
             addSpnToEnvironment: true
