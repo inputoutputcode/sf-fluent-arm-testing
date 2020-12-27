@@ -15,4 +15,7 @@ jobs:
             inlineScript: |
               cd $HOME
               ls -la
+              echo 'change dir to .azure + ls'
+              cd .azure
+              ls
             addSpnToEnvironment: true
