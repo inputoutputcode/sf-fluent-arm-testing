@@ -13,29 +13,9 @@ jobs:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
-              echo 'whoami'
-              whoami
-
               echo 'AZURE_CONFIG_DIR'
               echo $AZURE_CONFIG_DIR
               cd $AZURE_CONFIG_DIR
-              ls -la
-
-              echo 'ECHO: ' + $PWD
-              echo 'ECHO: cd $HOME + ls'
-              cd $HOME
-              echo 'ECHO: ' + $PWD
-              ls -la
-
-              cd .azure
-              ls -la
-              cat azureProfile.json
-
-              echo 'ECHO: cd /  + ls'
-              cd /tmp
-              echo 'ECHO: $PWD ' $PWD
-              ls -la
-
               cat azureProfile.json
               cat accessTokens.json
             addSpnToEnvironment: true
