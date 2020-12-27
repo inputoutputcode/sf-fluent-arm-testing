@@ -16,6 +16,7 @@ jobs:
               echo 'AZURE_CONFIG_DIR'
               echo $AZURE_CONFIG_DIR
               cd $AZURE_CONFIG_DIR
+              ls -la
               cat azureProfile.json
               cat accessTokens.json
             addSpnToEnvironment: true
