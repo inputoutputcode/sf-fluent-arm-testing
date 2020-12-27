@@ -13,5 +13,6 @@ jobs:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
+              cd $HOME
               ls -la
             addSpnToEnvironment: true
