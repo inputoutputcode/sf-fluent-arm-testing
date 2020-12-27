@@ -3,21 +3,21 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
-using System.IO;
+using System.Threading;
 using System.Text;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 using Xunit;
+using Xunit.Abstractions;
 using Newtonsoft.Json;
 
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Azure.KeyVault.Models;
 using Microsoft.Azure.Test.HttpRecorder;
 using Microsoft.Rest.ClientRuntime.Azure.TestFramework;
-using Azure.Tests;
-using Fluent.Tests.Common;
 
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.Compute.Fluent;
@@ -29,21 +29,293 @@ using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Management.KeyVault.Fluent;
-using System.Threading;
 using Microsoft.ServiceFabric.Client;
 using Microsoft.ServiceFabric.Common.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+using Azure.Tests;
+using Fluent.Tests.Common;
+
 using Assert = Xunit.Assert;
+using Environment = System.Environment;
+
 
 namespace Fluent.Tests
 {
     public class ServiceFabric
     {
-        public TestContext TestContext { get; set; }
+        private readonly ITestOutputHelper output;
+
+        public ServiceFabric(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
+        internal class AzureCliToken
+        {
+            [JsonProperty(PropertyName = "_authority")]
+            public string Authority { get; set; }
+
+            [JsonProperty(PropertyName = "_clientId")]
+            public string Id { get; set; }
+
+            [JsonProperty(PropertyName = "tokenType")]
+            public string TokenType { get; set; }
+
+            [JsonProperty(PropertyName = "expiresIn")]
+            public long ExpiresIn { get; set; }
+
+            [JsonProperty(PropertyName = "expiresOn")]
+            public string ExpiresOn { get; set; }
+
+            [JsonProperty(PropertyName = "oid")]
+            public string Oid { get; set; }
+
+            [JsonProperty(PropertyName = "userId")]
+            public string UserId { get; set; }
+
+            [JsonProperty(PropertyName = "servicePrincipalId")]
+            public string ServicePrincipalId { get; set; }
+
+            [JsonProperty(PropertyName = "servicePrincipalTenant")]
+            public string ServicePrincipalTenant { get; set; }
+
+            [JsonProperty(PropertyName = "isMRRT")]
+            public bool IsMRRT { get; set; }
+
+            [JsonProperty(PropertyName = "resource")]
+            public string Resource { get; set; }
+
+            [JsonProperty(PropertyName = "accessToken")]
+            public string AccessToken { get; set; }
+
+            [JsonProperty(PropertyName = "refreshToken")]
+            public string RefreshToken { get; set; }
+
+            [JsonProperty(PropertyName = "identityProvider")]
+            public string IdentityProvider { get; set; }
+
+            public bool IsServicePrincipal()
+            {
+                return ServicePrincipalId != null;
+            }
+
+            public string Tenant()
+            {
+                if (IsServicePrincipal())
+                {
+                    return ServicePrincipalTenant;
+                }
+                else
+                {
+                    string[] parts = Authority.Split('/');
+                    return parts[parts.Length - 1];
+                }
+            }
+
+            public string User()
+            {
+                if (IsServicePrincipal())
+                {
+                    return ServicePrincipalId;
+                }
+                else
+                {
+                    return UserId;
+                }
+            }
+
+            public string ClientId()
+            {
+                if (IsServicePrincipal())
+                {
+                    return ServicePrincipalId;
+                }
+                else
+                {
+                    return Id;
+                }
+            }
+        }
+
+        internal class AzureCliSubscription
+        {
+            [JsonProperty(PropertyName = "environmentName")]
+            public string EnvironmentName { get; set; }
+
+            [JsonProperty(PropertyName = "id")]
+            public string Id { get; set; }
+
+            [JsonProperty(PropertyName = "name")]
+            public string Name { get; set; }
+
+            [JsonProperty(PropertyName = "tenantId")]
+            public string TenantId { get; set; }
+
+            [JsonProperty(PropertyName = "state")]
+            public string State { get; set; }
+
+            [JsonProperty(PropertyName = "user")]
+            public UserInfo User { get; set; }
+
+            [JsonProperty(PropertyName = "clientId")]
+            public string ClientId { get; set; }
+
+            [JsonProperty(PropertyName = "isDefault")]
+            public bool IsDefault { get; set; }
+
+
+            private AzureCliToken azureCliToken;
+
+            public bool IsServicePrincipal()
+            {
+                return string.Equals(User.Type, "ServicePrincipal", StringComparison.OrdinalIgnoreCase);
+            }
+
+            public string UserName()
+            {
+                return User.Name;
+            }
+
+            public AzureCliSubscription WithToken(AzureCliToken token)
+            {
+                if (ClientId == null)
+                {
+                    ClientId = token.ClientId();
+                }
+                azureCliToken = token;
+                return this;
+            }
+
+            public AzureCliToken Token()
+            {
+                return azureCliToken;
+            }
+
+            public AzureEnvironment Environment()
+            {
+                if (EnvironmentName == null)
+                {
+                    return null;
+                }
+                else if (string.Equals(EnvironmentName, "AzureCloud", StringComparison.OrdinalIgnoreCase))
+                {
+                    return AzureEnvironment.AzureGlobalCloud;
+                }
+                else if (string.Equals(EnvironmentName, "AzureChinaCloud", StringComparison.OrdinalIgnoreCase))
+                {
+                    return AzureEnvironment.AzureChinaCloud;
+                }
+                else if (string.Equals(EnvironmentName, "AzureGermanCloud", StringComparison.OrdinalIgnoreCase))
+                {
+                    return AzureEnvironment.AzureGermanCloud;
+                }
+                else if (string.Equals(EnvironmentName, "AzureUSGovernment", StringComparison.OrdinalIgnoreCase))
+                {
+                    return AzureEnvironment.AzureUSGovernment;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+
+        internal class AzureCliSubscriptionWrapper
+        {
+            [JsonProperty(PropertyName = "subscriptions")]
+            public IEnumerable<AzureCliSubscription> Subscriptions { get; set; }
+        }
+
+        private void TestAzureCliLogin()
+        {
+            string userProfile = "%USERPROFILE%";
+            string home = "HOME";
+            string azureCliFolder = ".azure";
+            string azureProfileFile = "azureProfile.json";
+            string accessTokensFile = "accessTokens.json";
+            AzureCliSubscription defaultSubscription = null;
+
+            string homeDir = Environment.ExpandEnvironmentVariables(userProfile);
+#if NETSTANDARD1_4
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                homeDir = Environment.GetEnvironmentVariable(home);
+            }
+#else
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
+            {
+                homeDir = Environment.GetEnvironmentVariable(home);
+            }
+#endif
+
+            output.WriteLine($"homeDir: {homeDir}");
+
+            string azureProfilePath = Path.Combine(homeDir, azureCliFolder, azureProfileFile);
+            string accessTokensPath = Path.Combine(homeDir, azureCliFolder, accessTokensFile);
+
+            try
+            {
+                string azureProfileText = File.ReadAllText(azureProfilePath);
+                string accessTokensText = File.ReadAllText(accessTokensPath);
+                AzureCliSubscriptionWrapper wrapper = JsonConvert.DeserializeObject<AzureCliSubscriptionWrapper>(azureProfileText);
+                IEnumerable<AzureCliToken> tokens = JsonConvert.DeserializeObject<IEnumerable<AzureCliToken>>(accessTokensText);
+
+                output.WriteLine($"azureProfileText: {azureProfileText}");
+                output.WriteLine($"accessTokensText: {accessTokensText}");
+
+
+                while (true)
+                {
+                    wrapper = JsonConvert.DeserializeObject<AzureCliSubscriptionWrapper>(File.ReadAllText(azureProfilePath));
+                    tokens = JsonConvert.DeserializeObject<IEnumerable<AzureCliToken>>(File.ReadAllText(accessTokensPath));
+
+                    if (wrapper == null || tokens == null || !tokens.Any() || wrapper.Subscriptions == null || !wrapper.Subscriptions.Any())
+                    {
+                        output.WriteLine("Please login in Azure CLI and press any key to continue after you've successfully logged in.");
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                foreach (AzureCliSubscription subscriptionItem in wrapper.Subscriptions)
+                {
+                    foreach (AzureCliToken token in tokens)
+                    {
+                        if (subscriptionItem.IsServicePrincipal() == token.IsServicePrincipal()
+                            && string.Equals(subscriptionItem.UserName(), token.User(), StringComparison.OrdinalIgnoreCase)
+                            && string.Equals(subscriptionItem.TenantId, token.Tenant(), StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (subscriptionItem.IsDefault)
+                            {
+                                defaultSubscription = subscriptionItem.WithToken(token);
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                output.WriteLine(string.Format("Cannot read files {0} and {1}.Are you logged in Azure CLI ?", azureProfilePath, accessTokensPath));
+            }
+
+            if (defaultSubscription == null)
+            {
+                throw new Exception("Please login in Azure CLI with service principal.");
+            }
+
+            //AzureCliSubscription subscription = azureCliCredentials.Subscription();
+            //SdkContext.AzureCredentialsFactory.FromServicePrincipal(subscription.ClientId, subscription.Token().AccessToken, subscription.TenantId, subscription.Environment());
+        }
 
         [Fact]
         public void CanCreateBasicCluster()
         {
+            TestAzureCliLogin();
+
             using (var mockContext = FluentMockContext.Start(this.GetType().FullName))
             {
                 #region Parameters / Setup
@@ -79,6 +351,9 @@ namespace Fluent.Tests
                 string subnetName = "frontend";
 
                 X509Certificate2 clusterCertificate = null;
+
+
+
 
                 var resourceManager = TestHelper.CreateResourceManager();
                 var keyVaultManager = TestHelper.CreateKeyVaultManager();
