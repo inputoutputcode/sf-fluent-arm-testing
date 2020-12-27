@@ -1,0 +1,16 @@
+trigger:
+  - chrpap-sf1-abuild
+
+jobs:
+  - job: Ubuntu_Build
+    pool:
+      vmImage: 'ubuntu-16.04'
+  
+    steps:
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: 'Visual Studio Ultimate mit MSDN'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: 'ls -R -la'
+            addSpnToEnvironment: true

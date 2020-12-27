@@ -239,7 +239,7 @@ namespace Fluent.Tests
         private void TestAzureCliLogin()
         {
             string userProfile = "%USERPROFILE%";
-            string home = "$HOME";
+            string home = "HOME";
             string azureCliFolder = ".azure";
             string azureProfileFile = "azureProfile.json";
             string accessTokensFile = "accessTokens.json";
@@ -258,57 +258,56 @@ namespace Fluent.Tests
             }
 #endif
 
-            string tokenFileEnvVar = Environment.GetEnvironmentVariable("AZURE_ACCESS_TOKEN_FILE");
-
-            output.WriteLine($"AZURE_ACCESS_TOKEN_FILE: {tokenFileEnvVar}");
             output.WriteLine($"homeDir: {homeDir}");
 
             string azureProfilePath = Path.Combine(homeDir, azureCliFolder, azureProfileFile);
             string accessTokensPath = Path.Combine(homeDir, azureCliFolder, accessTokensFile);
 
-            try
+            string azureProfileText = File.ReadAllText(azureProfilePath);
+            string accessTokensText = File.ReadAllText(accessTokensPath);
+            AzureCliSubscriptionWrapper wrapper = JsonConvert.DeserializeObject<AzureCliSubscriptionWrapper>(azureProfileText);
+            IEnumerable<AzureCliToken> tokens = JsonConvert.DeserializeObject<IEnumerable<AzureCliToken>>(accessTokensText);
+
+            output.WriteLine($"azureProfileText: {azureProfileText}");
+            output.WriteLine($"accessTokensText: {accessTokensText}");
+
+
+            while (true)
             {
-                string azureProfileText = File.ReadAllText(azureProfilePath);
-                string accessTokensText = File.ReadAllText(accessTokensPath);
-                AzureCliSubscriptionWrapper wrapper = JsonConvert.DeserializeObject<AzureCliSubscriptionWrapper>(azureProfileText);
-                IEnumerable<AzureCliToken> tokens = JsonConvert.DeserializeObject<IEnumerable<AzureCliToken>>(accessTokensText);
+                wrapper = JsonConvert.DeserializeObject<AzureCliSubscriptionWrapper>(File.ReadAllText(azureProfilePath));
+                tokens = JsonConvert.DeserializeObject<IEnumerable<AzureCliToken>>(File.ReadAllText(accessTokensPath));
 
-                output.WriteLine($"azureProfileText: {azureProfileText}");
-                output.WriteLine($"accessTokensText: {accessTokensText}");
-
-
-                while (true)
+                if (wrapper == null || tokens == null || !tokens.Any() || wrapper.Subscriptions == null || !wrapper.Subscriptions.Any())
                 {
-                    wrapper = JsonConvert.DeserializeObject<AzureCliSubscriptionWrapper>(File.ReadAllText(azureProfilePath));
-                    tokens = JsonConvert.DeserializeObject<IEnumerable<AzureCliToken>>(File.ReadAllText(accessTokensPath));
-
-                    if (wrapper == null || tokens == null || !tokens.Any() || wrapper.Subscriptions == null || !wrapper.Subscriptions.Any())
-                    {
-                        output.WriteLine("Please login in Azure CLI and press any key to continue after you've successfully logged in.");
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    output.WriteLine("Please login in Azure CLI and press any key to continue after you've successfully logged in.");
                 }
-
-                foreach (AzureCliSubscription subscriptionItem in wrapper.Subscriptions)
+                else
                 {
-                    foreach (AzureCliToken token in tokens)
+                    break;
+                }
+            }
+
+            foreach (AzureCliSubscription subscriptionItem in wrapper.Subscriptions)
+            {
+                foreach (AzureCliToken token in tokens)
+                {
+                    if (subscriptionItem.IsServicePrincipal() == token.IsServicePrincipal()
+                        && string.Equals(subscriptionItem.UserName(), token.User(), StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(subscriptionItem.TenantId, token.Tenant(), StringComparison.OrdinalIgnoreCase))
                     {
-                        if (subscriptionItem.IsServicePrincipal() == token.IsServicePrincipal()
-                            && string.Equals(subscriptionItem.UserName(), token.User(), StringComparison.OrdinalIgnoreCase)
-                            && string.Equals(subscriptionItem.TenantId, token.Tenant(), StringComparison.OrdinalIgnoreCase))
+                        if (subscriptionItem.IsDefault)
                         {
-                            if (subscriptionItem.IsDefault)
-                            {
-                                defaultSubscription = subscriptionItem.WithToken(token);
-                            }
+                            defaultSubscription = subscriptionItem.WithToken(token);
                         }
                     }
                 }
             }
-            catch
+
+            try
+            {
+               
+            }
+            catch(Exception ex)
             {
                 output.WriteLine(string.Format("Cannot read files {0} and {1}.Are you logged in Azure CLI ?", azureProfilePath, accessTokensPath));
             }
