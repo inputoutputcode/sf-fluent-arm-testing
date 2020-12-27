@@ -40,9 +40,14 @@ namespace Microsoft.Azure.Management.ResourceManager.Fluent.Authentication
                 homeDir = Environment.GetEnvironmentVariable(home);
             }
 #endif
+
+            string azurePipelineTmpDir = homeDir;
+            if (Environment.GetEnvironmentVariable("AZURE_INFRA_DEPLOYMENT") != null)
+                azurePipelineTmpDir = "/tmp";
+            
             azureCliCredentials.Create(
                 Path.Combine(homeDir, azureCliFolder, azureProfileFile),
-                Path.Combine(homeDir, azureCliFolder, accessTokensFile)
+                Path.Combine(azurePipelineTmpDir, azureCliFolder, accessTokensFile)
                 );
 
             if (azureCliCredentials.Subscription() == null)

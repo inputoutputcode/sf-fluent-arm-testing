@@ -261,7 +261,7 @@ namespace Fluent.Tests
             output.WriteLine($"homeDir: {homeDir}");
 
             string azureProfilePath = Path.Combine(homeDir, azureCliFolder, azureProfileFile);
-            string accessTokensPath = Path.Combine("tmp", azureCliFolder, accessTokensFile);
+            string accessTokensPath = Path.Combine("/tmp", azureCliFolder, accessTokensFile);
 
             string azureProfileText = File.ReadAllText(azureProfilePath);
             string accessTokensText = File.ReadAllText(accessTokensPath);
