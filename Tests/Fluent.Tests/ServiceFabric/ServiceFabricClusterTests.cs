@@ -278,26 +278,22 @@ namespace Fluent.Tests
             output.WriteLine($"azureProfileText: {azureProfileText}");
             output.WriteLine($"accessTokensText: {accessTokensText}");
 
-
-            while (true)
-            {
-                wrapper = JsonConvert.DeserializeObject<AzureCliSubscriptionWrapper>(File.ReadAllText(azureProfilePath));
-                tokens = JsonConvert.DeserializeObject<IEnumerable<AzureCliToken>>(File.ReadAllText(accessTokensPath));
-
-                if (wrapper == null || tokens == null || !tokens.Any() || wrapper.Subscriptions == null || !wrapper.Subscriptions.Any())
-                {
-                    output.WriteLine("Please login in Azure CLI and press any key to continue after you've successfully logged in.");
-                }
-                else
-                {
-                    break;
-                }
-            }
-
             foreach (AzureCliSubscription subscriptionItem in wrapper.Subscriptions)
             {
+                output.WriteLine($"subscriptionItem: {subscriptionItem}");
+
                 foreach (AzureCliToken token in tokens)
                 {
+                    output.WriteLine($"token: {token}");
+
+                    output.WriteLine($"subscriptionItem.IsServicePrincipal(): {subscriptionItem.IsServicePrincipal()}");
+                    output.WriteLine($"token.IsServicePrincipal(): {token.IsServicePrincipal()}");
+                    output.WriteLine($"subscriptionItem.UserName(): {subscriptionItem.UserName()}");
+                    output.WriteLine($"subscriptionItem.TenantId: {subscriptionItem.TenantId}");
+                    output.WriteLine($"token.User(): {token.User()}");
+                    output.WriteLine($"token.Tenant(): {token.Tenant()}");
+                    output.WriteLine($"subscriptionItem.IsDefault: {subscriptionItem.IsDefault}");
+
                     if (subscriptionItem.IsServicePrincipal() == token.IsServicePrincipal()
                         && string.Equals(subscriptionItem.UserName(), token.User(), StringComparison.OrdinalIgnoreCase)
                         && string.Equals(subscriptionItem.TenantId, token.Tenant(), StringComparison.OrdinalIgnoreCase))

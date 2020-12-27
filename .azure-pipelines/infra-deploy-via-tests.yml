@@ -12,13 +12,6 @@ jobs:
             packageType: 'sdk'
             version: '2.x'
 
-        - task: AzureKeyVault@1
-          inputs:
-            azureSubscription: 'Visual Studio Ultimate mit MSDN'
-            KeyVaultName: 'chrpap-secrets'
-            SecretsFilter: '2dc1e421-5121-47e3-b411-36c8a35a35c8'
-            RunAsPreJob: false
-
         - task: AzureCLI@2
           inputs:
             azureSubscription: 'Visual Studio Ultimate mit MSDN'
