@@ -18,6 +18,8 @@ jobs:
 
               echo 'AZURE_CONFIG_DIR'
               echo $AZURE_CONFIG_DIR
+              cd $AZURE_CONFIG_DIR
+              ls -la
 
               echo 'ECHO: ' + $PWD
               echo 'ECHO: cd $HOME + ls'
