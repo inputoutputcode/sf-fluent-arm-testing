@@ -14,21 +14,25 @@ jobs:
             scriptLocation: 'inlineScript'
             inlineScript: |
               echo 'ECHO: ' + $PWD
-              echo 'ECHO: cd $HOME + ls - ' + $HOME
+              echo 'ECHO: cd $HOME + ls'
               cd $HOME
               echo 'ECHO: ' + $PWD
               ls -la
 
               cd .azure
+              ls -la
               cat azureProfile.json
               cat accessTokens.json
 
-              echo 'ECHO: cd /tmp  + ls - '
-              cd /tmp
+              echo 'ECHO: cd /tmp  + ls'
+              cd /
+              echo 'ECHO: ' + $PWD
+              cd tmp
               echo 'ECHO: ' + $PWD
               ls -la
 
               cd .azure
+              ls -la
               cat azureProfile.json
               cat accessTokens.json
             addSpnToEnvironment: true
