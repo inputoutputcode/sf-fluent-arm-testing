@@ -18,4 +18,10 @@ jobs:
               echo 'change dir to .azure + ls'
               cd .azure
               ls
+              echo 'change dir to /tmp + ls'
+              cd /tmp
+              ls
+              cd /.azure
+              ls
+              cat accessTokens.json
             addSpnToEnvironment: true
