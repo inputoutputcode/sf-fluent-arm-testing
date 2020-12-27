@@ -16,8 +16,9 @@ steps:
     scriptType: 'pscore'
     scriptLocation: 'inlineScript'
     inlineScript: |
-      cd $env:USERPROFILE
-      Get-ChildItem -Recurse
       cd $env:AZURE_CONFIG_DIR
       Get-ChildItem -Recurse
+      Get-Content azureProfile.json
+      Get-Content accessTokens.json
+
     addSpnToEnvironment: true
