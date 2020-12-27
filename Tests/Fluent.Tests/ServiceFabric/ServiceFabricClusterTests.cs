@@ -38,15 +38,57 @@ using Fluent.Tests.Common;
 
 using Assert = Xunit.Assert;
 using Environment = System.Environment;
-
+using System.Diagnostics;
 
 namespace Fluent.Tests
 {
     public class ServiceFabric
     {
+        private readonly ITestOutputHelper output;
+
+        public ServiceFabric(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
+        public class SingleTimer : IDisposable
+        {
+            private Stopwatch stopwatch = new Stopwatch();
+            private readonly ITestOutputHelper output;
+
+            public static readonly SingleTimer timer = new SingleTimer();
+            public static SingleTimer Start(ITestOutputHelper output)
+            {
+                timer.stopwatch.Reset();
+                timer.stopwatch.Start();
+
+                output = output;
+                output.WriteLine($"Timer Start: {timer.stopwatch.ElapsedMilliseconds} / {DateTime.Now.ToLongTimeString()}");
+
+                return timer;
+            }
+
+            public void Stop()
+            {
+                stopwatch.Stop();
+                output.WriteLine($"Timer Stop: {timer.stopwatch.ElapsedMilliseconds} / {DateTime.Now.ToLongTimeString()}");
+            }
+            public void Dispose()
+            {
+                stopwatch.Stop();
+                output.WriteLine($"Timer Dispose: {timer.stopwatch.ElapsedMilliseconds} / {DateTime.Now.ToLongTimeString()}");
+            }
+
+            public static TimeSpan Elapsed
+            {
+                get { return timer.stopwatch.Elapsed; }
+            }
+        }
+
         [Fact]
         public void CanCreateBasicCluster()
         {
+            using (SingleTimer.Start(output))
             using (var mockContext = FluentMockContext.Start(this.GetType().FullName))
             {
                 #region Parameters / Setup
@@ -71,7 +113,7 @@ namespace Fluent.Tests
                 string vmssName = deploymentName + "vmss";
                 string rdpNatPool = "rdpNatPool";
                 string userName = "FabricMonkey";
-                string password = "StrongPass!12"; 
+                string password = "StrongPass!12";
 
                 string clusterName = deploymentName + "sf";
                 string clusterCertificateName = deploymentName + "clustercert";
@@ -82,6 +124,9 @@ namespace Fluent.Tests
                 string subnetName = "frontend";
 
                 X509Certificate2 clusterCertificate = null;
+
+
+
 
                 var resourceManager = TestHelper.CreateResourceManager();
                 var keyVaultManager = TestHelper.CreateKeyVaultManager();
@@ -126,7 +171,7 @@ namespace Fluent.Tests
                         .AddNodeType(nodeTypeName)
                         .WithDefaults()
                         .Create();
-                    
+
                     var scaleSet = CreateScaleSet(region, backendPoolName1, vmssName, rdpNatPool, userName, password, subnetName, computeManager, resourceGroup, storageAccountDiagnostics, network, loadBalancer1, clusterCertificate.Thumbprint, vault1, secretBundle.SecretIdentifier.Identifier, nodeTypeName, serviceFabricCluster.ClusterEndpoint);
 
                     int totalWaitTimeInSeconds = 0;

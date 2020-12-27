@@ -329,7 +329,7 @@ namespace Fluent.Tests.Common
 
             if (Environment.GetEnvironmentVariable("AZURE_INFRA_DEPLOYMENT") != null)
             {
-                credentials = AzureCliCredentials.Create().WithDefaultSubscription(subscriptionId);
+                credentials = AzureCliCredentials.Create();
             }
             else if (authFilePath != null || HttpMockServer.Mode == HttpRecorderMode.Playback)
             {
