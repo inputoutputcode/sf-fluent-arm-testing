@@ -13,8 +13,10 @@ jobs:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
+              echo "cd ~"
               cd ~
-              ls -d */
+              ls -R -la
+              echo "cd /"
               cd /
               ls -d */
             addSpnToEnvironment: true
