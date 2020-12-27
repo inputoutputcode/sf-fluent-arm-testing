@@ -13,7 +13,14 @@ jobs:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
+              echo 'ECHO: change dir to /home/vsts + ls'
+              cd /home/vsts
               ls
+              echo 'ECHO: change dir to /.azure + ls'
+              cd /.azure
+              ls
+              cat azureProfile.json
+              cat accessTokens.json
               echo 'ECHO: change dir to /tmp + ls'
               cd /
               echo 'ECHO: ' + $PWD
