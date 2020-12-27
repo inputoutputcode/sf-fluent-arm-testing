@@ -13,6 +13,7 @@ jobs:
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
+              whoami
               echo 'ECHO: ' + $PWD
               echo 'ECHO: cd $HOME + ls'
               cd $HOME
