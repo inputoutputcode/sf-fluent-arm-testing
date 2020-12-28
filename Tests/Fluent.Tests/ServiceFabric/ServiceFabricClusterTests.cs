@@ -141,7 +141,7 @@ namespace Fluent.Tests
 
                     clusterCertificate = CreateSelfSignedServerCertificate(clusterDnsName, password);
                     string rawCertData = Convert.ToBase64String(clusterCertificate.RawData, 0, clusterCertificate.RawData.Length);
-                    secretBundle = vault1.Secrets.Define(clusterDnsName).WithValue(rawCertData).Create().Inner;
+                    secretBundle = vault1.Secrets.Define("clustercert").WithValue(rawCertData).Create().Inner;
                     //certCollection.Import(clusterCertificate.RawData, null, X509KeyStorageFlags.Exportable);
 
                     // Old implementation
