@@ -182,7 +182,10 @@ namespace Fluent.Tests
                     while (serviceFabricCluster.ClusterState != ClusterState.Ready)
                     {
                         serviceFabricCluster = serviceFabricCluster.Refresh();
-                        SdkContext.DelayProvider.Delay(waitTimeInSeconds * 1000);
+                        //SdkContext.DelayProvider.Delay(waitTimeInSeconds * 1000);
+                        Task.Delay(waitTimeInSeconds * 1000);
+
+                        output.WriteLine($"totalWaitTimeInSeconds: {totalWaitTimeInSeconds}");
 
                         if ((totalWaitTimeInSeconds += waitTimeInSeconds) > 216000) // 60 mins
                         {
