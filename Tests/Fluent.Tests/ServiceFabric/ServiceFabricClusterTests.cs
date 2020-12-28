@@ -181,16 +181,15 @@ namespace Fluent.Tests
                     int waitTimeInSeconds = 15;
                     while (serviceFabricCluster.ClusterState != ClusterState.Ready)
                     {
-                        serviceFabricCluster = serviceFabricCluster.Refresh();
-                        //SdkContext.DelayProvider.Delay(waitTimeInSeconds * 1000);
-                        Task.Delay(waitTimeInSeconds * 1000);
-
+                        SdkContext.DelayProvider.Delay(waitTimeInSeconds * 1000);
                         output.WriteLine($"totalWaitTimeInSeconds: {totalWaitTimeInSeconds}");
 
                         if ((totalWaitTimeInSeconds += waitTimeInSeconds) > 216000) // 60 mins
                         {
                             throw new Exception("Provisioning failed.");
                         }
+
+                        serviceFabricCluster = serviceFabricCluster.Refresh();
                     }
 
                     Func<CancellationToken, Task<SecuritySettings>> GetSecurityCredentials = (ct) =>
@@ -214,12 +213,12 @@ namespace Fluent.Tests
                 {
                     try
                     {
-                        //TestHelper.CreateResourceManager().ResourceGroups.BeginDeleteByName(resourceGroupName);
+                        TestHelper.CreateResourceManager().ResourceGroups.BeginDeleteByName(resourceGroupName);
 
-                        //// Remove the certificate
-                        //var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                        //store.Open(OpenFlags.ReadWrite);
-                        //store.Remove(clusterCertificate);
+                        // Remove the certificate
+                        var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                        store.Open(OpenFlags.ReadWrite);
+                        store.Remove(clusterCertificate);
                     }
                     catch { }
                 }
@@ -599,7 +598,7 @@ namespace Fluent.Tests
             while (certificateOperation.Status == "inProgress")
             {
                 Console.WriteLine($"Creation of certificate '{certName}' is in progress");
-                Task.Delay(5000);
+                SdkContext.DelayProvider.Delay(10000);
                 certificateOperation = keyVaultClient.GetCertificateOperationAsync(vault1.VaultUri, certName).Result;
             }
 
