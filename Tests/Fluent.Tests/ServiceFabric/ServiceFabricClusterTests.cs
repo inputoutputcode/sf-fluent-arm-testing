@@ -142,39 +142,13 @@ namespace Fluent.Tests
                     var resourceGroup = CreateResourceGroup(region, resourceGroupName, resourceManager);
                     var vault1 = CreateKeyVault(region, vaultName, keyVaultManager, resourceGroup);
 
-                    var certificate = CreateSelfSignedServerCertificate(clusterDnsName, password);
+                    secretBundle = CreateCertificate(clusterDnsName, keyVaultManager, vault1);
+                    var secretBytes = Convert.FromBase64String(secretBundle.Value);
 
                     certCollection = new X509Certificate2Collection();
-                    certCollection.Import(certificate.RawData, null, X509KeyStorageFlags.Exportable);
+                    certCollection.Import(secretBytes, null, X509KeyStorageFlags.Exportable);
                     byte[] protectedCertificateBytes = certCollection.Export(X509ContentType.Pkcs12, password);
                     clusterCertificate = new X509Certificate2(protectedCertificateBytes, password);
-
-                    string rawCertData = Convert.ToBase64String(clusterCertificate.RawData, 0, clusterCertificate.RawData.Length);
-                    var secretObject = new CertificateSecretObject
-                    {
-                        Data = rawCertData,
-                        DataType = "pfx",
-                        Password = password
-                    };
-
-                    string jsonString = JObject.FromObject(secretObject).ToString();
-                    byte[] jsonObjectBytes = Encoding.UTF8.GetBytes(jsonString);
-                    string jsonEncoded = Convert.ToBase64String(jsonObjectBytes);
-
-                    secretBundle = vault1.Secrets.Define(secretName).WithValue(jsonEncoded).WithContentType("application/x-pkcs12").Create().Inner;
-                    //secretBundle = vault1.Secrets.GetByName(secretName).Inner;
-                    //certCollection.Import(clusterCertificate.RawData, null, X509KeyStorageFlags.Exportable);
-
-                   
-
-                    // Old implementation
-                    //secretBundle = CreateCertificate(clusterDnsName, keyVaultManager, vault1);
-                    //var secretBytes = Convert.FromBase64String(secretBundle.Value);
-
-                    //certCollection = new X509Certificate2Collection();
-                    //certCollection.Import(secretBytes, null, X509KeyStorageFlags.Exportable);
-                    //byte[] protectedCertificateBytes = certCollection.Export(X509ContentType.Pkcs12, password);
-                    //clusterCertificate = new X509Certificate2(protectedCertificateBytes, password);
 
                     // Install the certificate for SFX/ClusterConnection locally
                     var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
@@ -200,6 +174,8 @@ namespace Fluent.Tests
                         .Create();
 
                     var scaleSet = CreateScaleSet(region, backendPoolName1, vmssName, rdpNatPool, userName, password, subnetName, computeManager, resourceGroup, storageAccountDiagnostics, network, loadBalancer1, clusterCertificate.Thumbprint, vault1.Id, secretBundle.SecretIdentifier.Identifier, nodeTypeName, serviceFabricCluster.ClusterEndpoint);
+
+                    output.WriteLine("after CreateScaleSet");
 
                     int totalWaitTimeInSeconds = 0;
                     int waitTimeInSeconds = 15;
@@ -620,47 +596,13 @@ namespace Fluent.Tests
             while (certificateOperation.Status == "inProgress")
             {
                 Console.WriteLine($"Creation of certificate '{certName}' is in progress");
-                Task.Delay(1000);
+                Task.Delay(5000);
                 certificateOperation = keyVaultClient.GetCertificateOperationAsync(vault1.VaultUri, certName).Result;
             }
 
             Console.WriteLine($"Creation of certificate '{certName}' is in status '{certificateOperation.Status}'");
 
             return keyVaultClient.GetSecretAsync(vault1.VaultUri, certName).Result;
-        }
-
-        [JsonObject]
-        public class CertificateSecretObject
-        {
-            [JsonProperty(PropertyName = "data")]
-            public string Data { get; set; }
-
-            [JsonProperty(PropertyName = "dataType")]
-            public string DataType { get; set; }
-
-            [JsonProperty(PropertyName = "password")]
-            public string Password { get; set; }
-        }
-
-        private X509Certificate2 CreateSelfSignedServerCertificate(string commonName, string password)
-        {
-            var sanBuilder = new SubjectAlternativeNameBuilder();
-            sanBuilder.AddDnsName(commonName);
-
-            var distinguishedName = new X500DistinguishedName($"CN={commonName}");
-
-            using (var rsa = RSA.Create(2048))
-            {
-                var request = new CertificateRequest(distinguishedName, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-                request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DigitalSignature, false));
-                request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection { new Oid("1.3.6.1.5.5.7.3.2"), new Oid("1.3.6.1.5.5.7.3.1") }, false));
-                request.CertificateExtensions.Add(sanBuilder.Build());
-
-                var certificate = request.CreateSelfSigned(new DateTimeOffset(DateTime.UtcNow.AddDays(-1)), new DateTimeOffset(DateTime.UtcNow.AddDays(3650)));
-                //certificate.FriendlyName = commonName;
-
-                return new X509Certificate2(certificate.Export(X509ContentType.Pkcs12, password), password, X509KeyStorageFlags.MachineKeySet);
-            }
         }
     }
 }
