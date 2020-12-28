@@ -57,12 +57,12 @@ namespace Fluent.Tests
             private readonly ITestOutputHelper output;
 
             public static readonly SingleTimer timer = new SingleTimer();
-            public static SingleTimer Start(ITestOutputHelper output)
+            public static SingleTimer Start(ITestOutputHelper outputHelper)
             {
                 timer.stopwatch.Reset();
                 timer.stopwatch.Start();
 
-                output = output;
+                output = outputHelper;
                 output.WriteLine($"Timer Start: {timer.stopwatch.ElapsedMilliseconds} / {DateTime.Now.ToLongTimeString()}");
 
                 return timer;
@@ -175,14 +175,14 @@ namespace Fluent.Tests
 
                     var scaleSet = CreateScaleSet(region, backendPoolName1, vmssName, rdpNatPool, userName, password, subnetName, computeManager, resourceGroup, storageAccountDiagnostics, network, loadBalancer1, clusterCertificate.Thumbprint, vault1.Id, secretBundle.SecretIdentifier.Identifier, nodeTypeName, serviceFabricCluster.ClusterEndpoint);
 
-                    output.WriteLine("after CreateScaleSet");
+                    Console.WriteLine("after CreateScaleSet");
 
                     int totalWaitTimeInSeconds = 0;
                     int waitTimeInSeconds = 15;
                     while (serviceFabricCluster.ClusterState != ClusterState.Ready)
                     {
                         SdkContext.DelayProvider.Delay(waitTimeInSeconds * 1000);
-                        output.WriteLine($"totalWaitTimeInSeconds: {totalWaitTimeInSeconds}");
+                        Console.WriteLine($"totalWaitTimeInSeconds: {totalWaitTimeInSeconds}");
 
                         if ((totalWaitTimeInSeconds += waitTimeInSeconds) > 216000) // 60 mins
                         {
@@ -204,7 +204,7 @@ namespace Fluent.Tests
                         .UseX509Security(GetSecurityCredentials)
                         .BuildAsync().GetAwaiter().GetResult();
 
-
+                    Console.WriteLine($"Cluster connect");
                     var clusterHealth = serviceFabricClient.Cluster.GetClusterHealthAsync().Result;
 
                     Assert.True(clusterHealth.UnhealthyEvaluations.Count() == 0);
