@@ -38,6 +38,7 @@ using Environment = System.Environment;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Fluent.Tests
 {
