@@ -143,12 +143,15 @@ namespace Fluent.Tests
 
                     clusterCertificate = CreateSelfSignedServerCertificate(clusterDnsName, password);
                     string rawCertData = Convert.ToBase64String(clusterCertificate.RawData, 0, clusterCertificate.RawData.Length);
-                    var secretObject = new CertificateSecretObject();
-                    secretObject.Data = rawCertData;
-                    secretObject.DataType = "pfx";
-                    secretObject.Password = password;
+                    var secretObject = new CertificateSecretObject
+                    {
+                        Data = rawCertData,
+                        DataType = "pfx",
+                        Password = password
+                    };
 
-                    byte[] jsonObjectBytes = Encoding.UTF8.GetBytes(jsonObject);
+                    string jsonString = JObject.FromObject(secretObject).ToString();
+                    byte[] jsonObjectBytes = Encoding.UTF8.GetBytes(jsonString);
                     string jsonEncoded = Convert.ToBase64String(jsonObjectBytes);
 
                     secretBundle = vault1.Secrets.Define(secretName).WithValue(jsonEncoded).Create().Inner;
