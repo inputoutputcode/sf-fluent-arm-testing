@@ -621,7 +621,7 @@ namespace Fluent.Tests
                 request.CertificateExtensions.Add(sanBuilder.Build());
 
                 var certificate = request.CreateSelfSigned(new DateTimeOffset(DateTime.UtcNow.AddDays(-1)), new DateTimeOffset(DateTime.UtcNow.AddDays(3650)));
-                certificate.FriendlyName = commonName;
+                //certificate.FriendlyName = commonName;
 
                 return new X509Certificate2(certificate.Export(X509ContentType.Pfx, password), password, X509KeyStorageFlags.MachineKeySet);
             }
