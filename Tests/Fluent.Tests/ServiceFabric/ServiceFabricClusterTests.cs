@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -12,7 +11,6 @@ using System.Text;
 
 using Xunit;
 using Xunit.Abstractions;
-using Newtonsoft.Json;
 
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Azure.KeyVault.Models;
@@ -31,7 +29,6 @@ using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Management.KeyVault.Fluent;
 using Microsoft.ServiceFabric.Client;
 using Microsoft.ServiceFabric.Common.Security;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Azure.Tests;
 using Fluent.Tests.Common;
@@ -39,6 +36,7 @@ using Fluent.Tests.Common;
 using Assert = Xunit.Assert;
 using Environment = System.Environment;
 using System.Diagnostics;
+using System.Security.Cryptography;
 
 namespace Fluent.Tests
 {
@@ -124,6 +122,8 @@ namespace Fluent.Tests
                 string subnetName = "frontend";
 
                 X509Certificate2 clusterCertificate = null;
+                var certCollection = new X509Certificate2Collection();
+                SecretBundle secretBundle = null;
 
                 var resourceManager = TestHelper.CreateResourceManager();
                 var keyVaultManager = TestHelper.CreateKeyVaultManager();
@@ -138,13 +138,20 @@ namespace Fluent.Tests
                 {
                     var resourceGroup = CreateResourceGroup(region, resourceGroupName, resourceManager);
                     var vault1 = CreateKeyVault(region, vaultName, keyVaultManager, resourceGroup);
-                    var secretBundle = CreateCertificate(clusterDnsName, keyVaultManager, vault1);
 
-                    var secretBytes = Convert.FromBase64String(secretBundle.Value);
-                    var certCollection = new X509Certificate2Collection();
-                    certCollection.Import(secretBytes, null, X509KeyStorageFlags.Exportable);
-                    byte[] protectedCertificateBytes = certCollection.Export(X509ContentType.Pkcs12, password);
-                    clusterCertificate = new X509Certificate2(protectedCertificateBytes, password);
+                    clusterCertificate = CreateSelfSignedServerCertificate(clusterDnsName, password);
+                    string rawCertData = Convert.ToBase64String(clusterCertificate.RawData, 0, clusterCertificate.RawData.Length);
+                    secretBundle = vault1.Secrets.Define(clusterDnsName).WithValue(rawCertData).Create().Inner;
+                    //certCollection.Import(clusterCertificate.RawData, null, X509KeyStorageFlags.Exportable);
+
+                    // Old implementation
+                    //secretBundle = CreateCertificate(clusterDnsName, keyVaultManager, vault1);
+                    //var secretBytes = Convert.FromBase64String(secretBundle.Value);
+
+                    //certCollection = new X509Certificate2Collection();
+                    //certCollection.Import(secretBytes, null, X509KeyStorageFlags.Exportable);
+                    //byte[] protectedCertificateBytes = certCollection.Export(X509ContentType.Pkcs12, password);
+                    //clusterCertificate = new X509Certificate2(protectedCertificateBytes, password);
 
                     // Install the certificate for SFX/ClusterConnection locally
                     var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
@@ -597,6 +604,27 @@ namespace Fluent.Tests
             Console.WriteLine($"Creation of certificate '{certName}' is in status '{certificateOperation.Status}'");
 
             return keyVaultClient.GetSecretAsync(vault1.VaultUri, certName).Result;
+        }
+
+        private X509Certificate2 CreateSelfSignedServerCertificate(string commonName, string password)
+        {
+            var sanBuilder = new SubjectAlternativeNameBuilder();
+            sanBuilder.AddDnsName(commonName);
+
+            var distinguishedName = new X500DistinguishedName($"CN={commonName}");
+
+            using (var rsa = RSA.Create(2048))
+            {
+                var request = new CertificateRequest(distinguishedName, rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DigitalSignature, false));
+                request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection { new Oid("1.3.6.1.5.5.7.3.2"), new Oid("1.3.6.1.5.5.7.3.1") }, false));
+                request.CertificateExtensions.Add(sanBuilder.Build());
+
+                var certificate = request.CreateSelfSigned(new DateTimeOffset(DateTime.UtcNow.AddDays(-1)), new DateTimeOffset(DateTime.UtcNow.AddDays(3650)));
+                certificate.FriendlyName = commonName;
+
+                return new X509Certificate2(certificate.Export(X509ContentType.Pfx, password), password, X509KeyStorageFlags.MachineKeySet);
+            }
         }
     }
 }
