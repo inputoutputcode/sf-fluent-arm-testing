@@ -46,9 +46,9 @@ namespace Fluent.Tests
     {
         private readonly ITestOutputHelper output;
 
-        public ServiceFabric(ITestOutputHelper output)
+        public ServiceFabric(ITestOutputHelper outputHelper)
         {
-            this.output = output;
+            this.output = outputHelper;
         }
 
         [Fact]
@@ -88,11 +88,6 @@ namespace Fluent.Tests
                 string clusterDnsName = clusterName + "." + region.Name + ".cloudapp.azure.com";
                 string nodeTypeName = "frontend";
                 string subnetName = "frontend";
-                string secretName = "clustercert";
-
-                X509Certificate2 clusterCertificate = null;
-                var certCollection = new X509Certificate2Collection();
-                SecretBundle secretBundle = null;
 
                 var resourceManager = TestHelper.CreateResourceManager();
                 var keyVaultManager = TestHelper.CreateKeyVaultManager();
@@ -101,6 +96,8 @@ namespace Fluent.Tests
                 var computeManager = TestHelper.CreateComputeManager();
                 var serviceFabricManager = TestHelper.CreateServiceFabricManager();
 
+                X509Certificate2 clusterCertificate = null;
+
                 #endregion
 
                 try
@@ -108,10 +105,10 @@ namespace Fluent.Tests
                     var resourceGroup = CreateResourceGroup(region, resourceGroupName, resourceManager);
                     var vault1 = CreateKeyVault(region, vaultName, keyVaultManager, resourceGroup);
 
-                    secretBundle = CreateCertificate(clusterDnsName, keyVaultManager, vault1);
+                    // Create self-signed cert
+                    var secretBundle = CreateCertificate(clusterDnsName, keyVaultManager, vault1);
                     var secretBytes = Convert.FromBase64String(secretBundle.Value);
-
-                    certCollection = new X509Certificate2Collection();
+                    var certCollection = new X509Certificate2Collection();
                     certCollection.Import(secretBytes, null, X509KeyStorageFlags.Exportable);
                     byte[] protectedCertificateBytes = certCollection.Export(X509ContentType.Pkcs12, password);
                     clusterCertificate = new X509Certificate2(protectedCertificateBytes, password);
