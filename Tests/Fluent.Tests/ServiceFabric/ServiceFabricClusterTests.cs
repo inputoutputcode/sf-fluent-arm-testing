@@ -51,40 +51,6 @@ namespace Fluent.Tests
             this.output = output;
         }
 
-        public class SingleTimer : IDisposable
-        {
-            private Stopwatch stopwatch = new Stopwatch();
-            private readonly ITestOutputHelper output;
-
-            public static readonly SingleTimer timer = new SingleTimer();
-            public static SingleTimer Start(ITestOutputHelper outputHelper)
-            {
-                timer.stopwatch.Reset();
-                timer.stopwatch.Start();
-
-                output = outputHelper;
-                output.WriteLine($"Timer Start: {timer.stopwatch.ElapsedMilliseconds} / {DateTime.Now.ToLongTimeString()}");
-
-                return timer;
-            }
-
-            public void Stop()
-            {
-                stopwatch.Stop();
-                output.WriteLine($"Timer Stop: {timer.stopwatch.ElapsedMilliseconds} / {DateTime.Now.ToLongTimeString()}");
-            }
-            public void Dispose()
-            {
-                stopwatch.Stop();
-                output.WriteLine($"Timer Dispose: {timer.stopwatch.ElapsedMilliseconds} / {DateTime.Now.ToLongTimeString()}");
-            }
-
-            public static TimeSpan Elapsed
-            {
-                get { return timer.stopwatch.Elapsed; }
-            }
-        }
-
         [Fact]
         public void CanCreateBasicCluster()
         {
