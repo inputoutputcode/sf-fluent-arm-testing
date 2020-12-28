@@ -37,6 +37,7 @@ using Assert = Xunit.Assert;
 using Environment = System.Environment;
 using System.Diagnostics;
 using System.Security.Cryptography;
+using Newtonsoft.Json;
 
 namespace Fluent.Tests
 {
@@ -120,6 +121,7 @@ namespace Fluent.Tests
                 string clusterDnsName = clusterName + "." + region.Name + ".cloudapp.azure.com";
                 string nodeTypeName = "frontend";
                 string subnetName = "frontend";
+                string secretName = "clustercert";
 
                 X509Certificate2 clusterCertificate = null;
                 var certCollection = new X509Certificate2Collection();
@@ -141,8 +143,22 @@ namespace Fluent.Tests
 
                     clusterCertificate = CreateSelfSignedServerCertificate(clusterDnsName, password);
                     string rawCertData = Convert.ToBase64String(clusterCertificate.RawData, 0, clusterCertificate.RawData.Length);
-                    secretBundle = vault1.Secrets.Define("clustercert").WithValue(rawCertData).Create().Inner;
+                    string fileContentEncoded = Convert.ToBase64String(clusterCertificate.RawData, 0, clusterCertificate.RawData.Length);
+                    string jsonObject = @"
+                    {
+                        'data': '{filecontentencoded}',
+                        'dataType': 'pfx',
+                        'password': '{certPassword}'
+                    }";
+                    byte[] jsonObjectBytes = Encoding.UTF8.GetBytes(jsonObject);
+                    string jsonEncoded = Convert.ToBase64String(jsonObjectBytes);
+
+                    secretBundle = vault1.Secrets.Define(secretName).WithValue(jsonEncoded).Create().Inner;
+                    //secretBundle = vault1.Secrets.GetByName(secretName).Inner;
                     //certCollection.Import(clusterCertificate.RawData, null, X509KeyStorageFlags.Exportable);
+
+                    output.WriteLine(string.Concat(clusterCertificate.Thumbprint, vault1.Id, secretBundle.SecretIdentifier.Identifier));
+                    
 
                     // Old implementation
                     //secretBundle = CreateCertificate(clusterDnsName, keyVaultManager, vault1);
@@ -176,7 +192,7 @@ namespace Fluent.Tests
                         .WithDefaults()
                         .Create();
 
-                    var scaleSet = CreateScaleSet(region, backendPoolName1, vmssName, rdpNatPool, userName, password, subnetName, computeManager, resourceGroup, storageAccountDiagnostics, network, loadBalancer1, clusterCertificate.Thumbprint, vault1, secretBundle.SecretIdentifier.Identifier, nodeTypeName, serviceFabricCluster.ClusterEndpoint);
+                    var scaleSet = CreateScaleSet(region, backendPoolName1, vmssName, rdpNatPool, userName, password, subnetName, computeManager, resourceGroup, storageAccountDiagnostics, network, loadBalancer1, clusterCertificate.Thumbprint, vault1.Id, secretBundle.SecretIdentifier.Identifier, nodeTypeName, serviceFabricCluster.ClusterEndpoint);
 
                     int totalWaitTimeInSeconds = 0;
                     int waitTimeInSeconds = 15;
@@ -462,7 +478,7 @@ namespace Fluent.Tests
             return loadBalancer1;
         }
 
-        private static IVirtualMachineScaleSet CreateScaleSet(Region region, string backendPoolName1, string vmssName, string rdpNatPool, string userName, string password, string subnetName, IComputeManager computeManager, IResourceGroup resourceGroup, IStorageAccount storageAccountDiagnostics, INetwork network, ILoadBalancer loadBalancer1, string thumbprint, IVault vault, string secretIdentifier, string nodeTypeName, string clusterEndpoint)
+        private static IVirtualMachineScaleSet CreateScaleSet(Region region, string backendPoolName1, string vmssName, string rdpNatPool, string userName, string password, string subnetName, IComputeManager computeManager, IResourceGroup resourceGroup, IStorageAccount storageAccountDiagnostics, INetwork network, ILoadBalancer loadBalancer1, string thumbprint, string vaultId, string secretIdentifier, string nodeTypeName, string clusterEndpoint)
         {
             var scaleSet = computeManager.VirtualMachineScaleSets.Define(vmssName)
                                     .WithRegion(region)
@@ -477,7 +493,7 @@ namespace Fluent.Tests
                                     .WithAdminUsername(userName)
                                     .WithAdminPassword(password)
                                     .WithComputerNamePrefix(nodeTypeName)
-                                    .WithVaultSecret(vault.Id, secretIdentifier, "My")
+                                    .WithVaultSecret(vaultId, secretIdentifier, "My")
                                     .WithOverProvision(false)
                                     .WithUpgradeMode(Microsoft.Azure.Management.Compute.Fluent.Models.UpgradeMode.Automatic)
                                     .WithCapacity(5)
@@ -604,6 +620,19 @@ namespace Fluent.Tests
             Console.WriteLine($"Creation of certificate '{certName}' is in status '{certificateOperation.Status}'");
 
             return keyVaultClient.GetSecretAsync(vault1.VaultUri, certName).Result;
+        }
+
+        [JsonObject]
+        public class CertificateSecretObject
+        {
+            [JsonProperty(PropertyName = "data")]
+            public string Data { get; set; }
+
+            [JsonProperty(PropertyName = "dataType")]
+            public string DataType { get; set; }
+
+            [JsonProperty(PropertyName = "password")]
+            public string Password { get; set; }
         }
 
         private X509Certificate2 CreateSelfSignedServerCertificate(string commonName, string password)
