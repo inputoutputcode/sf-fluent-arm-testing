@@ -143,13 +143,11 @@ namespace Fluent.Tests
 
                     clusterCertificate = CreateSelfSignedServerCertificate(clusterDnsName, password);
                     string rawCertData = Convert.ToBase64String(clusterCertificate.RawData, 0, clusterCertificate.RawData.Length);
-                    string fileContentEncoded = Convert.ToBase64String(clusterCertificate.RawData, 0, clusterCertificate.RawData.Length);
-                    string jsonObject = @"
-                    {
-                        'data': '{filecontentencoded}',
-                        'dataType': 'pfx',
-                        'password': '{certPassword}'
-                    }";
+                    var secretObject = new CertificateSecretObject();
+                    secretObject.Data = rawCertData;
+                    secretObject.DataType = "pfx";
+                    secretObject.Password = password;
+
                     byte[] jsonObjectBytes = Encoding.UTF8.GetBytes(jsonObject);
                     string jsonEncoded = Convert.ToBase64String(jsonObjectBytes);
 
@@ -157,8 +155,7 @@ namespace Fluent.Tests
                     //secretBundle = vault1.Secrets.GetByName(secretName).Inner;
                     //certCollection.Import(clusterCertificate.RawData, null, X509KeyStorageFlags.Exportable);
 
-                    output.WriteLine(string.Concat(clusterCertificate.Thumbprint, vault1.Id, secretBundle.SecretIdentifier.Identifier));
-                    
+                   
 
                     // Old implementation
                     //secretBundle = CreateCertificate(clusterDnsName, keyVaultManager, vault1);
