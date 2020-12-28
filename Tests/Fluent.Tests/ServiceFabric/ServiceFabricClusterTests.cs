@@ -142,7 +142,13 @@ namespace Fluent.Tests
                     var resourceGroup = CreateResourceGroup(region, resourceGroupName, resourceManager);
                     var vault1 = CreateKeyVault(region, vaultName, keyVaultManager, resourceGroup);
 
-                    clusterCertificate = CreateSelfSignedServerCertificate(clusterDnsName, password);
+                    var certificate = CreateSelfSignedServerCertificate(clusterDnsName, password);
+
+                    certCollection = new X509Certificate2Collection();
+                    certCollection.Import(certificate.RawData, null, X509KeyStorageFlags.Exportable);
+                    byte[] protectedCertificateBytes = certCollection.Export(X509ContentType.Pkcs12, password);
+                    clusterCertificate = new X509Certificate2(protectedCertificateBytes, password);
+
                     string rawCertData = Convert.ToBase64String(clusterCertificate.RawData, 0, clusterCertificate.RawData.Length);
                     var secretObject = new CertificateSecretObject
                     {
@@ -653,7 +659,7 @@ namespace Fluent.Tests
                 var certificate = request.CreateSelfSigned(new DateTimeOffset(DateTime.UtcNow.AddDays(-1)), new DateTimeOffset(DateTime.UtcNow.AddDays(3650)));
                 //certificate.FriendlyName = commonName;
 
-                return new X509Certificate2(certificate.Export(X509ContentType.Pfx, password), password, X509KeyStorageFlags.Exportable);
+                return new X509Certificate2(certificate.Export(X509ContentType.Pfx, password), password, X509KeyStorageFlags.MachineKeySet);
             }
         }
     }
