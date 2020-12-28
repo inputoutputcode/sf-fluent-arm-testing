@@ -155,7 +155,7 @@ namespace Fluent.Tests
                     byte[] jsonObjectBytes = Encoding.UTF8.GetBytes(jsonString);
                     string jsonEncoded = Convert.ToBase64String(jsonObjectBytes);
 
-                    secretBundle = vault1.Secrets.Define(secretName).WithValue(jsonEncoded).Create().Inner;
+                    secretBundle = vault1.Secrets.Define(secretName).WithValue(jsonEncoded).WithContentType("application/x-pkcs12").Create().Inner;
                     //secretBundle = vault1.Secrets.GetByName(secretName).Inner;
                     //certCollection.Import(clusterCertificate.RawData, null, X509KeyStorageFlags.Exportable);
 
@@ -653,7 +653,7 @@ namespace Fluent.Tests
                 var certificate = request.CreateSelfSigned(new DateTimeOffset(DateTime.UtcNow.AddDays(-1)), new DateTimeOffset(DateTime.UtcNow.AddDays(3650)));
                 //certificate.FriendlyName = commonName;
 
-                return new X509Certificate2(certificate.Export(X509ContentType.Pfx, password), password, X509KeyStorageFlags.MachineKeySet);
+                return new X509Certificate2(certificate.Export(X509ContentType.Pfx, password), password, X509KeyStorageFlags.Exportable);
             }
         }
     }
