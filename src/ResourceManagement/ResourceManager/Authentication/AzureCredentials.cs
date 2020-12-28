@@ -54,6 +54,15 @@ namespace Microsoft.Azure.Management.ResourceManager.Fluent.Authentication
             }
         }
 
+        // TODO: Remove this after refactoring
+        public string ClientSecret
+        {
+            get
+            {
+                return servicePrincipalLoginInformation.ClientSecret;
+            }
+        }
+
         public AzureEnvironment Environment { get; private set; }
 
 #if NET45

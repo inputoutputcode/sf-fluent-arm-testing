@@ -125,9 +125,6 @@ namespace Fluent.Tests
 
                 X509Certificate2 clusterCertificate = null;
 
-
-
-
                 var resourceManager = TestHelper.CreateResourceManager();
                 var keyVaultManager = TestHelper.CreateKeyVaultManager();
                 var storageManager = TestHelper.CreateStorageManager();
@@ -535,52 +532,41 @@ namespace Fluent.Tests
                                     .Create();
         }
 
-        private static ServicePrincipalLoginInformation ParseAuthFile(string authFile)
+        private static AzureCredentials GetAzureCredentials()
         {
-            var info = new ServicePrincipalLoginInformation();
+            AzureCredentials credentials;
+            string authFilePath = Environment.GetEnvironmentVariable("AZURE_AUTH_LOCATION");
 
-            var lines = File.ReadLines(authFile);
-            if (lines.First().Trim().StartsWith("{"))
+            if (Environment.GetEnvironmentVariable("AZURE_INFRA_DEPLOYMENT") != null)
             {
-                string json = string.Join("", lines);
-                var jsonConfig = Microsoft.Rest.Serialization.SafeJsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                info.ClientId = jsonConfig["clientId"];
-                if (jsonConfig.ContainsKey("clientSecret"))
-                {
-                    info.ClientSecret = jsonConfig["clientSecret"];
-                }
+                credentials = AzureCliCredentials.Create();
+            }
+            else if (authFilePath != null || HttpMockServer.Mode == HttpRecorderMode.Playback)
+            {
+                credentials = SdkContext.AzureCredentialsFactory.FromFile(authFilePath);
             }
             else
             {
-                lines.All(line =>
-                {
-                    if (line.Trim().StartsWith("#"))
-                        return true; // Ignore comments
-                    var keyVal = line.Trim().Split(new char[] { '=' }, 2);
-                    if (keyVal.Length < 2)
-                        return true; // Ignore lines that don't look like $$$=$$$
-                    if (keyVal[0].Equals("client", StringComparison.OrdinalIgnoreCase))
-                    {
-                        info.ClientId = keyVal[1];
-                    }
-                    if (keyVal[0].Equals("key", StringComparison.OrdinalIgnoreCase))
-                    {
-                        info.ClientSecret = keyVal[1];
-                    }
-                    return true;
-                });
+                string clientId = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
+                string tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
+                string clientSecret = Environment.GetEnvironmentVariable("AZURE_CLIENT_SECRET");
+                string subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
+
+                credentials = SdkContext.AzureCredentialsFactory.FromServicePrincipal(clientId, clientSecret, tenantId, AzureEnvironment.AzureGlobalCloud);
+                credentials.WithDefaultSubscription(subscriptionId);
             }
 
-            return info;
+            return credentials;
         }
 
+        // TODO: Remove the need of credentials
         private static SecretBundle CreateCertificate(string clusterDnsName, IKeyVaultManager keyVaultManager, IVault vault1)
         {
-            var servicePrincipalInfo = ParseAuthFile(System.Environment.GetEnvironmentVariable("AZURE_AUTH_LOCATION"));
+            var credentials = GetAzureCredentials();
             var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(async (authority, resource, scope) =>
             {
                 var context = new AuthenticationContext(authority, TokenCache.DefaultShared);
-                var result = await context.AcquireTokenAsync(resource, new ClientCredential(servicePrincipalInfo.ClientId, servicePrincipalInfo.ClientSecret));
+                var result = await context.AcquireTokenAsync(resource, new ClientCredential(credentials.ClientId, credentials.ClientSecret));
                 return result.AccessToken;
             }), ((KeyVaultManagementClient)keyVaultManager.Vaults.Manager.Inner).HttpClient);
 
