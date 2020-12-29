@@ -160,7 +160,7 @@ namespace Fluent.Tests
                     };
 
                     var serviceFabricClient = new ServiceFabricClientBuilder()
-                        .UseEndpoints(new Uri($@"https://{clusterDnsName}:19080"))
+                        .UseEndpoints(new Uri($@"https://{clusterDnsName}:19000"))
                         .UseX509Security(GetSecurityCredentials)
                         .BuildAsync().GetAwaiter().GetResult();
 
@@ -172,12 +172,12 @@ namespace Fluent.Tests
                 {
                     try
                     {
-                        //TestHelper.CreateResourceManager().ResourceGroups.BeginDeleteByName(resourceGroupName);
+                        TestHelper.CreateResourceManager().ResourceGroups.BeginDeleteByName(resourceGroupName);
 
-                        //// Remove the certificate
-                        //var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                        //store.Open(OpenFlags.ReadWrite);
-                        //store.Remove(clusterCertificate);
+                        // Remove the certificate
+                        var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                        store.Open(OpenFlags.ReadWrite);
+                        store.Remove(clusterCertificate);
                     }
                     catch { }
                 }
@@ -354,12 +354,13 @@ namespace Fluent.Tests
                                         .Create();
         }
 
-        private static IPublicIPAddress CreatePip(Region region, string publicIpName, INetworkManager networkManager, IResourceGroup resourceGroup)
+        private static IPublicIPAddress CreatePip(Region region, string publicIpName, string clusterName, INetworkManager networkManager, IResourceGroup resourceGroup)
         {
             return networkManager.PublicIPAddresses.Define(publicIpName)
                     .WithRegion(region)
                     .WithExistingResourceGroup(resourceGroup)
-                    .WithLeafDomainLabel(publicIpName)
+                    .WithLeafDomainLabel(clusterName)
+                    //.WithReverseFqdn(clusterDnsName)
                     .WithSku(PublicIPSkuType.Standard)
                     .WithStaticIP()
                     .Create();
