@@ -39,20 +39,25 @@ namespace Microsoft.Azure.Management.ServiceFabric.Fluent
             return this.WithDefaults();
         }
 
-        async Task<IServiceFabricCluster> RefreshAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<IServiceFabricCluster> RefreshAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            this.SetInner(await this.GetInnerAsync(cancellationToken));
+            var innerResult = await this.GetInnerAsync(cancellationToken);
+            this.SetInner(innerResult);
+
             return this;
         }
 
-        IServiceFabricCluster Refresh()
+        public override IServiceFabricCluster Refresh()
         {
             return ResourceManager.Fluent.Core.Extensions.Synchronize(() => RefreshAsync());
         }
 
-        protected override Task<ClusterParameters> GetInnerAsync(CancellationToken cancellationToken)
+        protected override async Task<ClusterParameters> GetInnerAsync(CancellationToken cancellationToken)
         {
-            return this.GetInnerAsync(cancellationToken);
+            using (var _result = await Manager.Inner.Clusters.GetWithHttpMessagesAsync(ResourceGroupName, Name, null, cancellationToken).ConfigureAwait(false))
+            {
+                return _result.Body;
+            }
         }
     }
 }

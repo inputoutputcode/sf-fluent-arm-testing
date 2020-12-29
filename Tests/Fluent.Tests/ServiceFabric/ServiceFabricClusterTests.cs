@@ -138,14 +138,11 @@ namespace Fluent.Tests
 
                     var scaleSet = CreateScaleSet(region, backendPoolName1, vmssName, rdpNatPool, userName, password, subnetName, computeManager, resourceGroup, storageAccountDiagnostics, network, loadBalancer1, clusterCertificate.Thumbprint, vault1.Id, secretBundle.SecretIdentifier.Identifier, nodeTypeName, serviceFabricCluster.ClusterEndpoint);
 
-                    Console.WriteLine("after CreateScaleSet");
-
                     int totalWaitTimeInSeconds = 0;
                     int waitTimeInSeconds = 15;
                     while (serviceFabricCluster.ClusterState != ClusterState.Ready)
                     {
                         SdkContext.DelayProvider.Delay(waitTimeInSeconds * 1000);
-                        Console.WriteLine($"totalWaitTimeInSeconds: {totalWaitTimeInSeconds}");
 
                         if ((totalWaitTimeInSeconds += waitTimeInSeconds) > 216000) // 60 mins
                         {
@@ -163,11 +160,10 @@ namespace Fluent.Tests
                     };
 
                     var serviceFabricClient = new ServiceFabricClientBuilder()
-                        .UseEndpoints(new Uri($"https://{clusterDnsName}:19080"))
+                        .UseEndpoints(new Uri($@"https://{clusterDnsName}:19080"))
                         .UseX509Security(GetSecurityCredentials)
                         .BuildAsync().GetAwaiter().GetResult();
 
-                    Console.WriteLine($"Cluster connect");
                     var clusterHealth = serviceFabricClient.Cluster.GetClusterHealthAsync().Result;
 
                     Assert.True(clusterHealth.UnhealthyEvaluations.Count() == 0);
@@ -176,12 +172,12 @@ namespace Fluent.Tests
                 {
                     try
                     {
-                        TestHelper.CreateResourceManager().ResourceGroups.BeginDeleteByName(resourceGroupName);
+                        //TestHelper.CreateResourceManager().ResourceGroups.BeginDeleteByName(resourceGroupName);
 
-                        // Remove the certificate
-                        var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                        store.Open(OpenFlags.ReadWrite);
-                        store.Remove(clusterCertificate);
+                        //// Remove the certificate
+                        //var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                        //store.Open(OpenFlags.ReadWrite);
+                        //store.Remove(clusterCertificate);
                     }
                     catch { }
                 }
