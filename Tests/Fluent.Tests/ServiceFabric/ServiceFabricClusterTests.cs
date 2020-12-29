@@ -160,7 +160,7 @@ namespace Fluent.Tests
                     };
 
                     var serviceFabricClient = new ServiceFabricClientBuilder()
-                        .UseEndpoints(new Uri($@"https://{clusterDnsName}:19000"))
+                        .UseEndpoints(new Uri($@"https://{clusterDnsName}:19080"))
                         .UseX509Security(GetSecurityCredentials)
                         .BuildAsync().GetAwaiter().GetResult();
 
