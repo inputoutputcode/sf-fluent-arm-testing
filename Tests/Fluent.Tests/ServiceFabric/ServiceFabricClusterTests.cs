@@ -122,7 +122,7 @@ namespace Fluent.Tests
                     var storageVmDisks = CreateStorageAccount(storageAccountName2, region, storageManager, resourceGroup);
                     var nsg = CreateNSGs(region, resourceGroupName, networkManager, resourceGroup);
                     var network = CreateNetwork(region, vnetName, subnetName, networkManager, resourceGroup, nsg);
-                    var publicIPAddress = CreatePip(region, publicIpName, networkManager, resourceGroup);
+                    var publicIPAddress = CreatePip(region, publicIpName, clusterName, networkManager, resourceGroup);
                     var loadBalancer1 = CreateLoadBalancer(region, loadBalancerName1, frontendName, backendPoolName1, httpProbe, fabricGatewayProbe, fabricHttpGatewayProbe, httpLoadBalancingRule, fabricGatewayLoadBalancingRule, fabricHttpGatewayLoadBalancingRule, rdpNatPool, networkManager, resourceGroup, publicIPAddress);
 
                     var serviceFabricCluster = serviceFabricManager.ServiceFabricClusters.Define(clusterName)
@@ -360,7 +360,6 @@ namespace Fluent.Tests
                     .WithRegion(region)
                     .WithExistingResourceGroup(resourceGroup)
                     .WithLeafDomainLabel(clusterName)
-                    //.WithReverseFqdn(clusterDnsName)
                     .WithSku(PublicIPSkuType.Standard)
                     .WithStaticIP()
                     .Create();
